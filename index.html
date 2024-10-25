@@ -6,6 +6,25 @@
     <title>we in box - حاسبة الشحن الذكية</title>
     <style>
         body {
+            transition: background-color 0.3s ease;
+        }
+
+        input, select {
+            transition: box-shadow 0.3s ease, transform 0.2s ease;
+        }
+
+        input:focus, select:focus {
+            transform: scale(1.02);
+        }
+
+        button {
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+        body {
             font-family: 'Arial', sans-serif;
             direction: rtl;
             background-color: #f0f2f5;
@@ -116,6 +135,13 @@
 </head>
 <body>
     <div class="calculator">
+        <div class="progress-bar-container" style="width: 100%; background-color: #f1f1f1; height: 20px; border-radius: 10px; margin-bottom: 20px;">
+            <div id="progressBar" style="width: 0%; height: 100%; background-color: #28a745; border-radius: 10px;"></div>
+        </div>
+        <div class="progress-bar-container" style="width: 100%; background-color: #f1f1f1; height: 20px; border-radius: 10px; margin-bottom: 20px;">
+            <div id="progressBar" style="width: 0%; height: 100%; background-color: #28a745; border-radius: 10px;"></div>
+        </div>
+        
         <div class="logo">
             <img src="we in box.jpg" alt="شعار شركة الشحن" style="width: 120px;">
         </div>
@@ -138,7 +164,7 @@
         </select>
 
         <label><i class="icon">&#x1F517;</i> رابط المنتج</label>
-        <input type="url" id="productLink" placeholder="أدخل رابط المنتج" oninput="saveData()">
+        <input type="url" id="productLink" placeholder="أدخل رابط المنتج" oninput="fetchProductDetails(); saveData()">
 
         <div id="amazonCategories" style="display:none;">
             <label><i class="icon">&#x1F4DD;</i> اختر نوع المنتج (Amazon)</label>
@@ -207,6 +233,15 @@
     </div>
 
     <script>
+        document.querySelectorAll('input, select, button').forEach(element => {
+            element.addEventListener('focus', () => {
+                element.style.boxShadow = '0 6px 12px rgba(0, 123, 255, 0.2)';
+            });
+
+            element.addEventListener('blur', () => {
+                element.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)';
+            });
+        });
         let uploadedImageUrl = '';
 
         function uploadImage(event) {
@@ -237,6 +272,7 @@
         }
 
         function updateForm() {
+            addInteractionEffects();
             let store = document.getElementById("store").value;
             document.getElementById("amazonCategories").style.display = store === "amazon" ? "block" : "none";
             document.getElementById("trendyolCategories").style.display = store === "trendyol" ? "block" : "none";
@@ -267,6 +303,8 @@
         }
 
         function calculatePrice() {
+            validateInputs();
+            addInteractionEffects();
             let store = document.getElementById("store").value;
             let breakdown = document.getElementById("breakdown");
             let productCostElement = document.getElementById("productCost");
@@ -368,19 +406,20 @@
 
                 let finalPrice = productPriceInIQD + shippingCost + totalPurchaseFee + customsFee;
 
-                document.getElementById("result").innerText = "السعر النهائي بالدينار العراقي: " + finalPrice.toFixed(2) + " دينار";
+                document.getElementById("result").innerText = "السعر النهائي بالدينار العراقي: " + Number(finalPrice).toLocaleString('de-DE') + " دينار";
 
-                productCostElement.innerText = productPriceInIQD.toFixed(2);
-                shippingCostElement.innerText = shippingCost.toFixed(2);
-                purchaseFeeElement.innerText = totalPurchaseFee.toFixed(2);
-                customsFeeElement.innerText = customsFee.toFixed(2);
-                totalCostElement.innerText = finalPrice.toFixed(2);
+                productCostElement.innerText = Number(productPriceInIQD).toLocaleString('de-DE');
+                shippingCostElement.innerText = Number(shippingCost).toLocaleString('de-DE');
+                purchaseFeeElement.innerText = Number(totalPurchaseFee).toLocaleString('de-DE');
+                customsFeeElement.innerText = Number(customsFee).toLocaleString('de-DE');
+                totalCostElement.innerText = Number(finalPrice).toLocaleString('de-DE');
 
                 breakdown.style.display = "block";
             }
         }
 
         function calculateShein() {
+            validateInputs();
             let subtotal = parseFloat(document.getElementById("subtotal").value);
             let itemCount = parseFloat(document.getElementById("itemCountShein").value);
             let repeat = document.getElementById("repeat").value;
@@ -397,6 +436,7 @@
         }
 
         function saveData() {
+            updateProgressBar();
             let store = document.getElementById("store").value;
             let productPrice = document.getElementById("productPrice").value;
             let weight = document.getElementById("weight").value;
@@ -411,6 +451,7 @@
         }
 
         function saveSheinData() {
+            updateProgressBar();
             let subtotal = document.getElementById("subtotal").value;
             let itemCount = document.getElementById("itemCountShein").value;
             let repeat = document.getElementById("repeat").value;
@@ -474,6 +515,92 @@
             if (imageUrl) {
                 document.getElementById('uploadedImage').src = imageUrl;
                 document.getElementById('uploadedImage').style.display = 'block';
+            }
+        }
+            function addInteractionEffects() {
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    input.style.borderColor = '#28a745';
+                    input.style.boxShadow = '0 4px 8px rgba(40, 167, 69, 0.2)';
+                });
+            });
+        }
+            
+            function validateInputs() {
+            const productPrice = document.getElementById("productPrice");
+            const weight = document.getElementById("weight");
+            const itemCount = document.getElementById("itemCount");
+            const subtotal = document.getElementById("subtotal");
+            const itemCountShein = document.getElementById("itemCountShein");
+
+            if (productPrice && productPrice.value < 0) {
+                productPrice.style.borderColor = 'red';
+                document.getElementById("result").innerText = "سعر المنتج يجب أن يكون رقمًا موجبًا.";
+            }
+
+            if (weight && weight.value < 0) {
+                weight.style.borderColor = 'red';
+                document.getElementById("result").innerText = "الوزن يجب أن يكون رقمًا موجبًا.";
+            }
+
+            if (itemCount && itemCount.value < 0) {
+                itemCount.style.borderColor = 'red';
+                document.getElementById("result").innerText = "عدد القطع يجب أن يكون رقمًا موجبًا.";
+            }
+
+            if (subtotal && subtotal.value < 0) {
+                subtotal.style.borderColor = 'red';
+                document.getElementById("result").innerText = "المجموع الفرعي يجب أن يكون رقمًا موجبًا.";
+            }
+
+            if (itemCountShein && itemCountShein.value < 0) {
+                itemCountShein.style.borderColor = 'red';
+                document.getElementById("result").innerText = "عدد القطع يجب أن يكون رقمًا موجبًا.";
+            }
+        }
+            function updateProgressBar() {
+            let filledInputs = 0;
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                if (input.value) {
+                    filledInputs++;
+                }
+            });
+            const progressPercentage = (filledInputs / inputs.length) * 100;
+            document.getElementById('progressBar').style.width = progressPercentage + '%';
+        }
+            function updateProgressBar() {
+            let filledInputs = 0;
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                if (input.value) {
+                    filledInputs++;
+                }
+            });
+            const progressPercentage = (filledInputs / inputs.length) * 100;
+            document.getElementById('progressBar').style.width = progressPercentage + '%';
+        }
+
+        document.querySelectorAll('input, select').forEach(element => {
+            element.addEventListener('input', updateProgressBar);
+        });
+            function fetchProductDetails() {
+            const productLink = document.getElementById('productLink').value;
+            if (productLink) {
+                // Mock API call to simulate fetching product details
+                fetch(`https://api.example.com/getProductDetails?url=${encodeURIComponent(productLink)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById('productPrice').value = data.price;
+                            document.getElementById('itemCount').value = data.quantity;
+                            calculatePrice();
+                        } else {
+                            console.error('Failed to fetch product details');
+                        }
+                    })
+                    .catch(err => console.error('Error fetching product details:', err));
             }
         }
     </script>
